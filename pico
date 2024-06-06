@@ -1,0 +1,36 @@
+import machine
+import urequests 
+from machine import Pin
+import network, time
+from dht import DHT11, InvalidChecksum
+ 
+HTTP_HEADERS = {'Content-Type': 'application/json'} 
+THINGSPEAK_WRITE_API_KEY = 'Y4VSS02J3VFSY0UK'  
+ 
+ssid = 'BELL685'
+password = '644642755D2F'
+ 
+# Configure Pico W as Station
+sta_if=network.WLAN(network.STA_IF)
+sta_if.active(True)
+ 
+if not sta_if.isconnected():
+    print('connecting to network...')
+    sta_if.connect(ssid, password)
+    while not sta_if.isconnected():
+     pass
+print('network config:', sta_if.ifconfig()) 
+ 
+while True:
+    time.sleep(5) 
+    pin = Pin(0, Pin.OUT, Pin.PULL_DOWN)
+    sensor = DHT11(pin)
+    t  = (sensor.temperature)
+    h = (sensor.humidity)
+    print("Temperature: {}".format(sensor.temperature))
+    print("Humidity: {}".format(sensor.humidity))
+    
+    dht_readings = {'field1':t, 'field2':h} 
+    request = urequests.post( 'http://api.thingspeak.com/update?api_key=' + THINGSPEAK_WRITE_API_KEY, json = dht_readings, headers = HTTP_HEADERS )  
+    request.close() 
+    print(dht_readings) 
